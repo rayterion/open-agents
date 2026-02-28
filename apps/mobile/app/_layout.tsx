@@ -4,15 +4,29 @@
  */
 
 import React from 'react';
+import { TouchableOpacity } from 'react-native';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Feather } from '@expo/vector-icons';
-import { colors } from '../src/theme';
+import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
 
-export default function RootLayout() {
+function AppTabs() {
+  const { colors, isDark, toggleTheme } = useTheme();
+
+  const ThemeToggle = () => (
+    <TouchableOpacity
+      onPress={toggleTheme}
+      style={{ marginRight: 16, padding: 4 }}
+      accessibilityRole="button"
+      accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      <Feather name={isDark ? 'sun' : 'moon'} size={20} color={colors.textPrimary} />
+    </TouchableOpacity>
+  );
+
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Tabs
         screenOptions={{
           headerStyle: {
@@ -23,6 +37,7 @@ export default function RootLayout() {
             fontWeight: '600',
           },
           headerShadowVisible: false,
+          headerRight: () => <ThemeToggle />,
           tabBarStyle: {
             backgroundColor: colors.surface,
             borderTopColor: colors.border,
@@ -57,5 +72,13 @@ export default function RootLayout() {
         />
       </Tabs>
     </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <AppTabs />
+    </ThemeProvider>
   );
 }

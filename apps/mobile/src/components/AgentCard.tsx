@@ -3,11 +3,12 @@
  * Displays agent name, team, status, and reputation.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Agent, AgentTeam, AgentStatus } from '@open-agents/shared';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { colors, Colors, spacing, fontSize, borderRadius } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 
 interface AgentCardProps {
   agent: Agent;
@@ -40,6 +41,8 @@ const STATUS_COLORS: Record<AgentStatus, string> = {
 };
 
 export function AgentCard({ agent, onPress }: AgentCardProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const teamColor = TEAM_COLORS[agent.team] ?? colors.textMuted;
   const teamIcon = TEAM_ICONS[agent.team] ?? 'help-circle';
   const statusColor = STATUS_COLORS[agent.status] ?? colors.textMuted;
@@ -87,7 +90,8 @@ export function AgentCard({ agent, onPress }: AgentCardProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Colors) {
+  return StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
@@ -163,4 +167,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textPrimary,
   },
-});
+  });
+}

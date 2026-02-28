@@ -3,10 +3,11 @@
  * Uses Feather icons instead of emojis for a clean, professional look.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { Colors, spacing, fontSize, borderRadius } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 
 interface EmptyStateProps {
   icon: React.ComponentProps<typeof Feather>['name'];
@@ -17,6 +18,9 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon, title, message, actionLabel, onAction }: EmptyStateProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       <View style={styles.iconContainer}>
@@ -33,7 +37,8 @@ export function EmptyState({ icon, title, message, actionLabel, onAction }: Empt
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Colors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -74,4 +79,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textInverse,
   },
-});
+  });
+}

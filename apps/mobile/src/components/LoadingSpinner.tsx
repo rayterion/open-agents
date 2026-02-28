@@ -2,15 +2,19 @@
  * Loading spinner component with consistent styling.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
-import { colors, spacing, fontSize } from '../theme';
+import { Colors, spacing, fontSize } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 
 interface LoadingSpinnerProps {
   message?: string;
 }
 
 export function LoadingSpinner({ message = 'Loading...' }: LoadingSpinnerProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       <ActivityIndicator size="large" color={colors.primary} />
@@ -19,7 +23,8 @@ export function LoadingSpinner({ message = 'Loading...' }: LoadingSpinnerProps) 
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Colors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -31,4 +36,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textSecondary,
   },
-});
+  });
+}

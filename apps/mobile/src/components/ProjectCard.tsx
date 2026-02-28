@@ -3,10 +3,11 @@
  * Displays project name, description, status, and tags.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Project, ProjectStatus } from '@open-agents/shared';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { colors, Colors, spacing, fontSize, borderRadius } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 
 interface ProjectCardProps {
   project: Project;
@@ -30,6 +31,8 @@ const STATUS_LABELS: Record<ProjectStatus, string> = {
 };
 
 export function ProjectCard({ project, onPress }: ProjectCardProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const statusColor = STATUS_COLORS[project.status] ?? colors.textMuted;
 
   return (
@@ -79,7 +82,8 @@ export function ProjectCard({ project, onPress }: ProjectCardProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Colors) {
+  return StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
@@ -158,4 +162,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.textMuted,
   },
-});
+  });
+}

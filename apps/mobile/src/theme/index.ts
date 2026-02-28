@@ -70,5 +70,47 @@ export const borderRadius = {
   full: 9999,
 } as const;
 
-export type Colors = typeof colors;
+export const darkColors = {
+  // Core palette (same accent)
+  primary: '#0D9488',
+  primaryLight: '#14B8A6',
+  primaryDark: '#0F766E',
+
+  // Semantic colors (same)
+  success: '#16A34A',
+  warning: '#D97706',
+  error: '#DC2626',
+  info: '#2563EB',
+
+  // Background layers (dark theme)
+  background: '#0C0A09', // Stone-950
+  surface: '#1C1917', // Stone-900
+  surfaceElevated: '#292524', // Stone-800
+  surfaceHighlight: '#44403C', // Stone-700
+
+  // Text
+  textPrimary: '#FAFAF9', // Stone-50
+  textSecondary: '#A8A29E', // Stone-400
+  textMuted: '#78716C', // Stone-500
+  textInverse: '#1C1917',
+
+  // Borders
+  border: '#44403C', // Stone-700
+  borderSubtle: '#292524', // Stone-800
+
+  // Team colors (same)
+  teamCreative: '#7C3AED',
+  teamManager: '#D97706',
+  teamCodeWriter: '#059669',
+
+  // Status colors (same)
+  statusActive: '#16A34A',
+  statusIdle: '#D97706',
+  statusPending: '#2563EB',
+  statusSuspended: '#DC2626',
+} as const;
+
+export type Colors = {
+  [K in keyof typeof colors]: string;
+};
 export type Spacing = typeof spacing;

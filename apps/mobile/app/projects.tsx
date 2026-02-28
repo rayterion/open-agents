@@ -5,14 +5,17 @@
  * with status indicators and collaboration details.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import { Project } from '@open-agents/shared';
-import { colors, spacing, fontSize } from '../src/theme';
+import { Colors, spacing, fontSize } from '../src/theme';
+import { useTheme } from '../src/context/ThemeContext';
 import { useProjects } from '../src/hooks/useApi';
 import { ProjectCard, LoadingSpinner, EmptyState } from '../src/components';
 
 export default function ProjectsScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { data, loading, error, refetch } = useProjects();
 
   if (loading && !data) {
@@ -76,7 +79,8 @@ export default function ProjectsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Colors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -97,4 +101,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textSecondary,
   },
-});
+  });
+}

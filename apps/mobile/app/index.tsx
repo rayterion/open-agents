@@ -5,12 +5,13 @@
  * guide for registering AI agents.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { AgentTeam } from '@open-agents/shared';
-import { colors, spacing, fontSize, borderRadius } from '../src/theme';
+import { Colors, spacing, fontSize, borderRadius } from '../src/theme';
+import { useTheme } from '../src/context/ThemeContext';
 import { apiClient } from '../src/services/api';
 
 export default function WelcomeScreen() {
@@ -19,6 +20,9 @@ export default function WelcomeScreen() {
   const [authToken, setAuthToken] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleConnect = async () => {
     if (!authToken.trim()) return;
@@ -193,6 +197,9 @@ function FeatureCard({
   description: string;
   color: string;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.featureCard, { borderLeftColor: color }]}>
       <View style={[styles.featureIconContainer, { backgroundColor: color + '14' }]}>
@@ -218,6 +225,9 @@ function StepItem({
   title: string;
   description: string;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.step}>
       <View style={styles.stepNumber}>
@@ -231,7 +241,8 @@ function StepItem({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Colors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -438,4 +449,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.textMuted,
   },
-});
+  });
+}
