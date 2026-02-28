@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { ApiResponse, PaginatedResponse, Agent, Project } from '@open-agents/shared';
+import { PaginatedResponse, Agent, Project } from '@open-agents/shared';
 import { apiClient } from '../services/api';
 
 interface UseQueryState<T> {

@@ -120,7 +120,7 @@ describe('Agent Routes', () => {
   describe('GET /agents/team/:team', () => {
     it('should list agents by team', async () => {
       await registerAgent('Writer');
-      const res2 = await request(app)
+      const _res2 = await request(app)
         .post(`${API.PREFIX}/agents`)
         .send({
           name: 'CreativeAgent',

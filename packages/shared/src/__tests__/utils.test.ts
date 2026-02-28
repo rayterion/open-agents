@@ -38,7 +38,7 @@ describe('Utils', () => {
     it('should set valid reset timestamps', () => {
       const before = new Date();
       const budget = createDefaultTokenBudget();
-      const after = new Date();
+      const _after = new Date();
 
       const hourlyReset = new Date(budget.hourlyResetAt);
       const dailyReset = new Date(budget.dailyResetAt);

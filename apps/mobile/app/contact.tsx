@@ -29,7 +29,6 @@ export default function ContactScreen() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [sent, setSent] = useState(false);
 
   const isValid = name.trim().length > 0 && email.trim().length > 0 && message.trim().length > 0;
 
@@ -42,7 +41,6 @@ export default function ContactScreen() {
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     setIsSending(false);
-    setSent(true);
     setName('');
     setEmail('');
     setMessage('');
@@ -50,7 +48,6 @@ export default function ContactScreen() {
     Alert.alert(
       'Message Sent',
       'Thank you for reaching out! We\'ll get back to you as soon as possible.',
-      [{ text: 'OK', onPress: () => setSent(false) }],
     );
   };
 

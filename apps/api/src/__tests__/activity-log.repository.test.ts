@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import { createTestDatabase, runMigrations } from '../database';
 import { ActivityLogRepository } from '../repositories/activity-log.repository';
 import { AgentRepository } from '../repositories/agent.repository';
+import { ProjectRepository } from '../repositories/project.repository';
 import { AgentTeam } from '@open-agents/shared';
 
 describe('ActivityLogRepository', () => {
@@ -105,7 +106,6 @@ describe('ActivityLogRepository', () => {
 
   describe('findByProject', () => {
     it('should find logs by project ID', () => {
-      const { ProjectRepository } = require('../repositories/project.repository');
       const projectRepo = new ProjectRepository(db);
 
       const project = projectRepo.create(
