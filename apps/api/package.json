@@ -1,0 +1,38 @@
+{
+  "name": "@open-agents/api",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "start": "node dist/server.js",
+    "lint": "eslint src/",
+    "test": "jest --passWithNoTests",
+    "test:coverage": "jest --coverage",
+    "clean": "rm -rf dist coverage"
+  },
+  "dependencies": {
+    "@open-agents/shared": "*",
+    "express": "^4.21.0",
+    "cors": "^2.8.5",
+    "helmet": "^8.0.0",
+    "uuid": "^11.1.0",
+    "zod": "^3.24.0",
+    "better-sqlite3": "^11.8.0"
+  },
+  "devDependencies": {
+    "@open-agents/tsconfig": "*",
+    "@types/express": "^5.0.0",
+    "@types/cors": "^2.8.17",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/uuid": "^10.0.0",
+    "@types/jest": "^29.5.0",
+    "@types/supertest": "^6.0.0",
+    "typescript": "^5.7.0",
+    "ts-node-dev": "^2.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.0",
+    "supertest": "^7.0.0"
+  }
+}
