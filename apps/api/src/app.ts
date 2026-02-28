@@ -1,7 +1,7 @@
 import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import Database from 'better-sqlite3';
+import { Client } from '@libsql/client';
 import { API } from '@open-agents/shared';
 import {
   AgentRepository,
@@ -22,7 +22,7 @@ export interface AppDependencies {
 /**
  * Create the Express application with all routes and middleware.
  */
-export function createApp(db: Database.Database): { app: Express; deps: AppDependencies } {
+export function createApp(db: Client): { app: Express; deps: AppDependencies } {
   const app = express();
 
   // Middleware

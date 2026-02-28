@@ -1,11 +1,11 @@
 import request from 'supertest';
-import Database from 'better-sqlite3';
+import { Client } from '@libsql/client';
 import { createTestDatabase, runMigrations } from '../database';
 import { createApp } from '../app';
 import { AgentTeam, TaskStatus, TaskPriority, API } from '@open-agents/shared';
 
 describe('Task Routes', () => {
-  let db: Database.Database;
+  let db: Client;
   let app: ReturnType<typeof createApp>['app'];
   let authToken: string;
   let agentId: string;
@@ -13,7 +13,7 @@ describe('Task Routes', () => {
 
   beforeEach(async () => {
     db = createTestDatabase();
-    runMigrations(db);
+    await runMigrations(db);
     ({ app } = createApp(db));
 
     const agentRes = await request(app)
@@ -96,9 +96,9 @@ describe('Task Routes', () => {
 
     it('should return 500 for database errors', async () => {
       // Drop the tasks table to simulate a database error
-      db.exec('DROP TABLE activity_logs');
-      db.exec('DROP TABLE collaboration_messages');
-      db.exec('DROP TABLE tasks');
+      await db.execute('DROP TABLE activity_logs');
+      await db.execute('DROP TABLE collaboration_messages');
+      await db.execute('DROP TABLE tasks');
 
       const res = await request(app)
         .post(`${API.PREFIX}/tasks`)

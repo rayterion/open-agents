@@ -15,13 +15,10 @@ export class ProjectService {
     private activityLogRepo: ActivityLogRepository,
   ) {}
 
-  /**
-   * Create a new project.
-   */
-  createProject(dto: CreateProjectDto, agentId: string): Project {
-    const project = this.projectRepo.create(dto, agentId);
+  async createProject(dto: CreateProjectDto, agentId: string): Promise<Project> {
+    const project = await this.projectRepo.create(dto, agentId);
 
-    this.activityLogRepo.create({
+    await this.activityLogRepo.create({
       agentId,
       action: 'PROJECT_CREATED',
       details: `Project "${project.name}" created`,
@@ -31,46 +28,34 @@ export class ProjectService {
     return project;
   }
 
-  /**
-   * Get project by ID.
-   */
-  getProject(id: string): Project | null {
+  async getProject(id: string): Promise<Project | null> {
     return this.projectRepo.findById(id);
   }
 
-  /**
-   * List all projects with pagination.
-   */
-  listProjects(
+  async listProjects(
     page: number = PAGINATION.DEFAULT_PAGE,
     pageSize: number = PAGINATION.DEFAULT_PAGE_SIZE,
-  ): PaginatedResponse<Project> {
+  ): Promise<PaginatedResponse<Project>> {
     const clampedSize = Math.min(pageSize, PAGINATION.MAX_PAGE_SIZE);
-    const { projects, total } = this.projectRepo.findAll(page, clampedSize);
+    const { projects, total } = await this.projectRepo.findAll(page, clampedSize);
     return createPaginatedResponse(projects, total, page, clampedSize);
   }
 
-  /**
-   * List projects by status.
-   */
-  listProjectsByStatus(
+  async listProjectsByStatus(
     status: ProjectStatus,
     page: number = PAGINATION.DEFAULT_PAGE,
     pageSize: number = PAGINATION.DEFAULT_PAGE_SIZE,
-  ): PaginatedResponse<Project> {
+  ): Promise<PaginatedResponse<Project>> {
     const clampedSize = Math.min(pageSize, PAGINATION.MAX_PAGE_SIZE);
-    const { projects, total } = this.projectRepo.findByStatus(status, page, clampedSize);
+    const { projects, total } = await this.projectRepo.findByStatus(status, page, clampedSize);
     return createPaginatedResponse(projects, total, page, clampedSize);
   }
 
-  /**
-   * Update project status.
-   */
-  updateProjectStatus(id: string, status: ProjectStatus, agentId: string): Project | null {
-    const updated = this.projectRepo.updateStatus(id, status);
+  async updateProjectStatus(id: string, status: ProjectStatus, agentId: string): Promise<Project | null> {
+    const updated = await this.projectRepo.updateStatus(id, status);
 
     if (updated) {
-      this.activityLogRepo.create({
+      await this.activityLogRepo.create({
         agentId,
         action: 'PROJECT_STATUS_CHANGED',
         details: `Project status changed to ${status}`,
@@ -81,16 +66,13 @@ export class ProjectService {
     return updated;
   }
 
-  /**
-   * Assign an agent to a project.
-   */
-  assignAgent(projectId: string, agentId: string, requestingAgentId: string): Project | null {
-    const project = this.projectRepo.findById(projectId);
+  async assignAgent(projectId: string, agentId: string, requestingAgentId: string): Promise<Project | null> {
+    const project = await this.projectRepo.findById(projectId);
     if (!project) return null;
 
-    this.projectRepo.assignAgent(projectId, agentId);
+    await this.projectRepo.assignAgent(projectId, agentId);
 
-    this.activityLogRepo.create({
+    await this.activityLogRepo.create({
       agentId: requestingAgentId,
       action: 'AGENT_ASSIGNED_TO_PROJECT',
       details: `Agent ${agentId} assigned to project`,
@@ -100,16 +82,13 @@ export class ProjectService {
     return this.projectRepo.findById(projectId);
   }
 
-  /**
-   * Remove an agent from a project.
-   */
-  removeAgent(projectId: string, agentId: string, requestingAgentId: string): Project | null {
-    const project = this.projectRepo.findById(projectId);
+  async removeAgent(projectId: string, agentId: string, requestingAgentId: string): Promise<Project | null> {
+    const project = await this.projectRepo.findById(projectId);
     if (!project) return null;
 
-    this.projectRepo.removeAgent(projectId, agentId);
+    await this.projectRepo.removeAgent(projectId, agentId);
 
-    this.activityLogRepo.create({
+    await this.activityLogRepo.create({
       agentId: requestingAgentId,
       action: 'AGENT_REMOVED_FROM_PROJECT',
       details: `Agent ${agentId} removed from project`,
@@ -119,10 +98,7 @@ export class ProjectService {
     return this.projectRepo.findById(projectId);
   }
 
-  /**
-   * Delete a project.
-   */
-  deleteProject(id: string): boolean {
+  async deleteProject(id: string): Promise<boolean> {
     return this.projectRepo.delete(id);
   }
 }

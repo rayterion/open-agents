@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { Client } from '@libsql/client';
 import { v4 as uuidv4 } from 'uuid';
 import { Task, TaskStatus, TaskPriority, CreateTaskDto } from '@open-agents/shared';
 
@@ -35,96 +35,81 @@ function rowToTask(row: TaskRow): Task {
 }
 
 export class TaskRepository {
-  constructor(private db: Database.Database) {}
+  constructor(private db: Client) {}
 
-  create(dto: CreateTaskDto, agentId: string): Task {
+  async create(dto: CreateTaskDto, agentId: string): Promise<Task> {
     const id = uuidv4();
 
-    this.db
-      .prepare(
-        `INSERT INTO tasks (id, title, description, project_id, created_by_agent_id, priority, estimated_tokens)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .run(
-        id,
-        dto.title,
-        dto.description,
-        dto.projectId,
-        agentId,
-        dto.priority,
-        dto.estimatedTokens ?? 0,
-      );
+    await this.db.execute({
+      sql: `INSERT INTO tasks (id, title, description, project_id, created_by_agent_id, priority, estimated_tokens)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [id, dto.title, dto.description, dto.projectId, agentId, dto.priority, dto.estimatedTokens ?? 0],
+    });
 
-    return this.findById(id)!;
+    return (await this.findById(id))!;
   }
 
-  findById(id: string): Task | null {
-    const row = this.db.prepare('SELECT * FROM tasks WHERE id = ?').get(id) as TaskRow | undefined;
+  async findById(id: string): Promise<Task | null> {
+    const result = await this.db.execute({ sql: 'SELECT * FROM tasks WHERE id = ?', args: [id] });
+    const row = result.rows[0] as unknown as TaskRow | undefined;
     return row ? rowToTask(row) : null;
   }
 
-  findByProject(
-    projectId: string,
-    page: number,
-    pageSize: number,
-  ): { tasks: Task[]; total: number } {
-    const total = (
-      this.db
-        .prepare('SELECT COUNT(*) as count FROM tasks WHERE project_id = ?')
-        .get(projectId) as {
-        count: number;
-      }
-    ).count;
+  async findByProject(projectId: string, page: number, pageSize: number): Promise<{ tasks: Task[]; total: number }> {
+    const countResult = await this.db.execute({
+      sql: 'SELECT COUNT(*) as count FROM tasks WHERE project_id = ?',
+      args: [projectId],
+    });
+    const total = Number((countResult.rows[0] as any).count);
 
-    const rows = this.db
-      .prepare('SELECT * FROM tasks WHERE project_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?')
-      .all(projectId, pageSize, (page - 1) * pageSize) as TaskRow[];
+    const result = await this.db.execute({
+      sql: 'SELECT * FROM tasks WHERE project_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      args: [projectId, pageSize, (page - 1) * pageSize],
+    });
 
-    return { tasks: rows.map(rowToTask), total };
+    return { tasks: (result.rows as unknown as TaskRow[]).map(rowToTask), total };
   }
 
-  findByAgent(agentId: string, page: number, pageSize: number): { tasks: Task[]; total: number } {
-    const total = (
-      this.db
-        .prepare('SELECT COUNT(*) as count FROM tasks WHERE assigned_agent_id = ?')
-        .get(agentId) as { count: number }
-    ).count;
+  async findByAgent(agentId: string, page: number, pageSize: number): Promise<{ tasks: Task[]; total: number }> {
+    const countResult = await this.db.execute({
+      sql: 'SELECT COUNT(*) as count FROM tasks WHERE assigned_agent_id = ?',
+      args: [agentId],
+    });
+    const total = Number((countResult.rows[0] as any).count);
 
-    const rows = this.db
-      .prepare(
-        'SELECT * FROM tasks WHERE assigned_agent_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
-      )
-      .all(agentId, pageSize, (page - 1) * pageSize) as TaskRow[];
+    const result = await this.db.execute({
+      sql: 'SELECT * FROM tasks WHERE assigned_agent_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      args: [agentId, pageSize, (page - 1) * pageSize],
+    });
 
-    return { tasks: rows.map(rowToTask), total };
+    return { tasks: (result.rows as unknown as TaskRow[]).map(rowToTask), total };
   }
 
-  updateStatus(id: string, status: TaskStatus): Task | null {
-    this.db
-      .prepare("UPDATE tasks SET status = ?, updated_at = datetime('now') WHERE id = ?")
-      .run(status, id);
+  async updateStatus(id: string, status: TaskStatus): Promise<Task | null> {
+    await this.db.execute({
+      sql: "UPDATE tasks SET status = ?, updated_at = datetime('now') WHERE id = ?",
+      args: [status, id],
+    });
     return this.findById(id);
   }
 
-  assignAgent(id: string, agentId: string): Task | null {
-    this.db
-      .prepare(
-        "UPDATE tasks SET assigned_agent_id = ?, status = 'TODO', updated_at = datetime('now') WHERE id = ?",
-      )
-      .run(agentId, id);
+  async assignAgent(id: string, agentId: string): Promise<Task | null> {
+    await this.db.execute({
+      sql: "UPDATE tasks SET assigned_agent_id = ?, status = 'TODO', updated_at = datetime('now') WHERE id = ?",
+      args: [agentId, id],
+    });
     return this.findById(id);
   }
 
-  updateTokensUsed(id: string, tokensUsed: number): void {
-    this.db
-      .prepare(
-        "UPDATE tasks SET actual_tokens_used = actual_tokens_used + ?, updated_at = datetime('now') WHERE id = ?",
-      )
-      .run(tokensUsed, id);
+  async updateTokensUsed(id: string, tokensUsed: number): Promise<void> {
+    await this.db.execute({
+      sql: "UPDATE tasks SET actual_tokens_used = actual_tokens_used + ?, updated_at = datetime('now') WHERE id = ?",
+      args: [tokensUsed, id],
+    });
   }
 
-  delete(id: string): boolean {
-    const result = this.db.prepare('DELETE FROM tasks WHERE id = ?').run(id);
-    return result.changes > 0;
+  async delete(id: string): Promise<boolean> {
+    const result = await this.db.execute({ sql: 'DELETE FROM tasks WHERE id = ?', args: [id] });
+    return result.rowsAffected > 0;
   }
 }

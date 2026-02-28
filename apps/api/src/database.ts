@@ -1,49 +1,49 @@
-import Database from 'better-sqlite3';
-import path from 'path';
+import { createClient, Client } from '@libsql/client';
 
-let db: Database.Database | null = null;
+let client: Client | null = null;
 
 /**
- * Get or create the database connection.
- * Uses SQLite for simplicity and portability.
+ * Get or create the database client.
+ * Connects to Turso (libsql) using environment variables.
+ * Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in your environment.
+ * For local dev you can use a file URL: file:./data/open-agents.db
  */
-export function getDatabase(dbPath?: string): Database.Database {
-  if (db) return db;
+export function getDatabase(): Client {
+  if (client) return client;
 
-  const resolvedPath = dbPath ?? path.join(process.cwd(), 'data', 'open-agents.db');
-  db = new Database(resolvedPath);
+  const url = process.env.TURSO_DATABASE_URL;
+  const authToken = process.env.TURSO_AUTH_TOKEN;
 
-  // Enable WAL mode for better concurrent read performance
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
+  if (!url) {
+    throw new Error('TURSO_DATABASE_URL environment variable is required');
+  }
 
-  return db;
+  client = createClient({ url, authToken });
+  return client;
 }
 
 /**
  * Create an in-memory database for testing.
  */
-export function createTestDatabase(): Database.Database {
-  const testDb = new Database(':memory:');
-  testDb.pragma('foreign_keys = ON');
-  return testDb;
+export function createTestDatabase(): Client {
+  return createClient({ url: ':memory:' });
 }
 
 /**
  * Close the database connection.
  */
 export function closeDatabase(): void {
-  if (db) {
-    db.close();
-    db = null;
+  if (client) {
+    client.close();
+    client = null;
   }
 }
 
 /**
  * Run all migrations to set up the database schema.
  */
-export function runMigrations(database: Database.Database): void {
-  database.exec(`
+export async function runMigrations(database: Client): Promise<void> {
+  await database.executeMultiple(`
     CREATE TABLE IF NOT EXISTS agents (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL UNIQUE,

@@ -1,18 +1,18 @@
 import request from 'supertest';
-import Database from 'better-sqlite3';
+import { Client } from '@libsql/client';
 import { createTestDatabase, runMigrations } from '../database';
 import { createApp } from '../app';
 import { AgentTeam, ProjectStatus, API } from '@open-agents/shared';
 
 describe('Project Routes', () => {
-  let db: Database.Database;
+  let db: Client;
   let app: ReturnType<typeof createApp>['app'];
   let authToken: string;
   let agentId: string;
 
   beforeEach(async () => {
     db = createTestDatabase();
-    runMigrations(db);
+    await runMigrations(db);
     ({ app } = createApp(db));
 
     // Register and store auth token
@@ -99,11 +99,11 @@ describe('Project Routes', () => {
 
     it('should return 500 for generic database errors', async () => {
       // Drop tables to simulate a database error
-      db.exec('DROP TABLE activity_logs');
-      db.exec('DROP TABLE collaboration_messages');
-      db.exec('DROP TABLE tasks');
-      db.exec('DROP TABLE project_agents');
-      db.exec('DROP TABLE projects');
+      await db.execute('DROP TABLE activity_logs');
+      await db.execute('DROP TABLE collaboration_messages');
+      await db.execute('DROP TABLE tasks');
+      await db.execute('DROP TABLE project_agents');
+      await db.execute('DROP TABLE projects');
 
       const res = await request(app)
         .post(`${API.PREFIX}/projects`)

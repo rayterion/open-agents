@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { Client } from '@libsql/client';
 import { createTestDatabase, runMigrations } from '../database';
 import { AgentRepository } from '../repositories/agent.repository';
 import { ProjectRepository } from '../repositories/project.repository';
@@ -8,21 +8,21 @@ import { TaskService } from '../services/task.service';
 import { AgentTeam, TaskStatus, TaskPriority } from '@open-agents/shared';
 
 describe('TaskService', () => {
-  let db: Database.Database;
+  let db: Client;
   let service: TaskService;
   let testAgentId: string;
   let testProjectId: string;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     db = createTestDatabase();
-    runMigrations(db);
+    await runMigrations(db);
     const agentRepo = new AgentRepository(db);
     const projectRepo = new ProjectRepository(db);
     const taskRepo = new TaskRepository(db);
     const logRepo = new ActivityLogRepository(db);
     service = new TaskService(taskRepo, logRepo);
 
-    const agent = agentRepo.create({
+    const agent = await agentRepo.create({
       name: 'TestAgent',
       description: 'Test',
       team: AgentTeam.MANAGER,
@@ -30,7 +30,7 @@ describe('TaskService', () => {
     });
     testAgentId = agent.id;
 
-    const project = projectRepo.create(
+    const project = await projectRepo.create(
       {
         name: 'TestProject',
         description: 'Test',
@@ -59,93 +59,93 @@ describe('TaskService', () => {
   };
 
   describe('createTask', () => {
-    it('should create a task', () => {
-      const task = createTestTask();
+    it('should create a task', async () => {
+      const task = await createTestTask();
       expect(task.title).toBe('Test Task');
       expect(task.projectId).toBe(testProjectId);
     });
 
-    it('should log creation activity', () => {
-      createTestTask();
+    it('should log creation activity', async () => {
+      await createTestTask();
       const logRepo = new ActivityLogRepository(db);
-      const logs = logRepo.findByAgent(testAgentId, 1, 20);
+      const logs = await logRepo.findByAgent(testAgentId, 1, 20);
       expect(logs.logs.some((l) => l.action === 'TASK_CREATED')).toBe(true);
     });
   });
 
   describe('getTask', () => {
-    it('should find task by ID', () => {
-      const task = createTestTask();
-      expect(service.getTask(task.id)).not.toBeNull();
+    it('should find task by ID', async () => {
+      const task = await createTestTask();
+      expect(await service.getTask(task.id)).not.toBeNull();
     });
 
-    it('should return null for non-existent', () => {
-      expect(service.getTask('non-existent')).toBeNull();
+    it('should return null for non-existent', async () => {
+      expect(await service.getTask('non-existent')).toBeNull();
     });
   });
 
   describe('listTasksByProject', () => {
-    it('should list tasks by project', () => {
+    it('should list tasks by project', async () => {
       for (let i = 0; i < 3; i++) {
-        createTestTask(`Task ${i}`);
+        await createTestTask(`Task ${i}`);
       }
-      const result = service.listTasksByProject(testProjectId);
+      const result = await service.listTasksByProject(testProjectId);
       expect(result.total).toBe(3);
     });
   });
 
   describe('listTasksByAgent', () => {
-    it('should list tasks by agent', () => {
-      const task = createTestTask();
-      service.assignTask(task.id, testAgentId, testAgentId);
-      const result = service.listTasksByAgent(testAgentId);
+    it('should list tasks by agent', async () => {
+      const task = await createTestTask();
+      await service.assignTask(task.id, testAgentId, testAgentId);
+      const result = await service.listTasksByAgent(testAgentId);
       expect(result.total).toBe(1);
     });
   });
 
   describe('assignTask', () => {
-    it('should assign task to agent', () => {
-      const task = createTestTask();
-      const assigned = service.assignTask(task.id, testAgentId, testAgentId);
+    it('should assign task to agent', async () => {
+      const task = await createTestTask();
+      const assigned = await service.assignTask(task.id, testAgentId, testAgentId);
       expect(assigned!.assignedAgentId).toBe(testAgentId);
       expect(assigned!.status).toBe(TaskStatus.TODO);
     });
 
-    it('should return null for non-existent task', () => {
-      expect(service.assignTask('non-existent', testAgentId, testAgentId)).toBeNull();
+    it('should return null for non-existent task', async () => {
+      expect(await service.assignTask('non-existent', testAgentId, testAgentId)).toBeNull();
     });
   });
 
   describe('updateTaskStatus', () => {
-    it('should update task status', () => {
-      const task = createTestTask();
-      const updated = service.updateTaskStatus(task.id, TaskStatus.IN_PROGRESS, testAgentId);
+    it('should update task status', async () => {
+      const task = await createTestTask();
+      const updated = await service.updateTaskStatus(task.id, TaskStatus.IN_PROGRESS, testAgentId);
       expect(updated!.status).toBe(TaskStatus.IN_PROGRESS);
     });
 
-    it('should return null for non-existent task', () => {
-      const result = service.updateTaskStatus('non-existent', TaskStatus.DONE, testAgentId);
+    it('should return null for non-existent task', async () => {
+      const result = await service.updateTaskStatus('non-existent', TaskStatus.DONE, testAgentId);
       expect(result).toBeNull();
     });
   });
 
   describe('recordTokenUsage', () => {
-    it('should record token usage', () => {
-      const task = createTestTask();
-      service.recordTokenUsage(task.id, 500);
-      const found = service.getTask(task.id);
+    it('should record token usage', async () => {
+      const task = await createTestTask();
+      await service.recordTokenUsage(task.id, 500);
+      const found = await service.getTask(task.id);
       expect(found!.actualTokensUsed).toBe(500);
     });
   });
 
   describe('deleteTask', () => {
-    it('should delete a task', () => {
-      const task = createTestTask();
-      expect(service.deleteTask(task.id)).toBe(true);
+    it('should delete a task', async () => {
+      const task = await createTestTask();
+      expect(await service.deleteTask(task.id)).toBe(true);
     });
 
-    it('should return false for non-existent', () => {
-      expect(service.deleteTask('non-existent')).toBe(false);
+    it('should return false for non-existent', async () => {
+      expect(await service.deleteTask('non-existent')).toBe(false);
     });
   });
 });

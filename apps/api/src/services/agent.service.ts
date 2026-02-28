@@ -18,13 +18,10 @@ export class AgentService {
     private activityLogRepo: ActivityLogRepository,
   ) {}
 
-  /**
-   * Register a new AI agent.
-   */
-  registerAgent(dto: CreateAgentDto): Agent {
-    const agent = this.agentRepo.create(dto);
+  async registerAgent(dto: CreateAgentDto): Promise<Agent> {
+    const agent = await this.agentRepo.create(dto);
 
-    this.activityLogRepo.create({
+    await this.activityLogRepo.create({
       agentId: agent.id,
       action: 'AGENT_REGISTERED',
       details: `Agent "${agent.name}" registered to team ${agent.team}`,
@@ -33,53 +30,38 @@ export class AgentService {
     return agent;
   }
 
-  /**
-   * Get agent by ID.
-   */
-  getAgent(id: string): Agent | null {
+  async getAgent(id: string): Promise<Agent | null> {
     return this.agentRepo.findById(id);
   }
 
-  /**
-   * Authenticate agent by token.
-   */
-  authenticateAgent(token: string): Agent | null {
+  async authenticateAgent(token: string): Promise<Agent | null> {
     return this.agentRepo.findByAuthToken(token);
   }
 
-  /**
-   * List all agents with pagination.
-   */
-  listAgents(
+  async listAgents(
     page: number = PAGINATION.DEFAULT_PAGE,
     pageSize: number = PAGINATION.DEFAULT_PAGE_SIZE,
-  ): PaginatedResponse<Agent> {
+  ): Promise<PaginatedResponse<Agent>> {
     const clampedSize = Math.min(pageSize, PAGINATION.MAX_PAGE_SIZE);
-    const { agents, total } = this.agentRepo.findAll(page, clampedSize);
+    const { agents, total } = await this.agentRepo.findAll(page, clampedSize);
     return createPaginatedResponse(agents, total, page, clampedSize);
   }
 
-  /**
-   * List agents by team.
-   */
-  listAgentsByTeam(
+  async listAgentsByTeam(
     team: AgentTeam,
     page: number = PAGINATION.DEFAULT_PAGE,
     pageSize: number = PAGINATION.DEFAULT_PAGE_SIZE,
-  ): PaginatedResponse<Agent> {
+  ): Promise<PaginatedResponse<Agent>> {
     const clampedSize = Math.min(pageSize, PAGINATION.MAX_PAGE_SIZE);
-    const { agents, total } = this.agentRepo.findByTeam(team, page, clampedSize);
+    const { agents, total } = await this.agentRepo.findByTeam(team, page, clampedSize);
     return createPaginatedResponse(agents, total, page, clampedSize);
   }
 
-  /**
-   * Update agent configuration.
-   */
-  updateAgent(id: string, dto: UpdateAgentDto): Agent | null {
-    const updated = this.agentRepo.update(id, dto);
+  async updateAgent(id: string, dto: UpdateAgentDto): Promise<Agent | null> {
+    const updated = await this.agentRepo.update(id, dto);
 
     if (updated) {
-      this.activityLogRepo.create({
+      await this.activityLogRepo.create({
         agentId: id,
         action: 'AGENT_UPDATED',
         details: `Agent configuration updated: ${Object.keys(dto).join(', ')}`,
@@ -89,21 +71,18 @@ export class AgentService {
     return updated;
   }
 
-  /**
-   * Activate an agent (move from PENDING to ACTIVE).
-   */
-  activateAgent(id: string): Agent | null {
-    const agent = this.agentRepo.findById(id);
+  async activateAgent(id: string): Promise<Agent | null> {
+    const agent = await this.agentRepo.findById(id);
     if (!agent) return null;
 
     if (agent.status !== AgentStatus.PENDING && agent.status !== AgentStatus.IDLE) {
       return agent;
     }
 
-    const updated = this.agentRepo.updateStatus(id, AgentStatus.ACTIVE);
+    const updated = await this.agentRepo.updateStatus(id, AgentStatus.ACTIVE);
 
     if (updated) {
-      this.activityLogRepo.create({
+      await this.activityLogRepo.create({
         agentId: id,
         action: 'AGENT_ACTIVATED',
         details: `Agent status changed from ${agent.status} to ACTIVE`,
@@ -113,14 +92,11 @@ export class AgentService {
     return updated;
   }
 
-  /**
-   * Suspend an agent.
-   */
-  suspendAgent(id: string, reason: string): Agent | null {
-    const updated = this.agentRepo.updateStatus(id, AgentStatus.SUSPENDED);
+  async suspendAgent(id: string, reason: string): Promise<Agent | null> {
+    const updated = await this.agentRepo.updateStatus(id, AgentStatus.SUSPENDED);
 
     if (updated) {
-      this.activityLogRepo.create({
+      await this.activityLogRepo.create({
         agentId: id,
         action: 'AGENT_SUSPENDED',
         details: `Agent suspended: ${reason}`,
@@ -130,19 +106,16 @@ export class AgentService {
     return updated;
   }
 
-  /**
-   * Record token usage and check if agent should be moved to idle.
-   */
-  recordTokenUsage(id: string, tokensUsed: number): Agent | null {
-    this.agentRepo.updateTokenUsage(id, tokensUsed);
+  async recordTokenUsage(id: string, tokensUsed: number): Promise<Agent | null> {
+    await this.agentRepo.updateTokenUsage(id, tokensUsed);
 
-    const agent = this.agentRepo.findById(id);
+    const agent = await this.agentRepo.findById(id);
     if (!agent) return null;
 
     if (isTokenLimitExceeded(agent.tokenBudget) && agent.status === AgentStatus.ACTIVE) {
-      this.agentRepo.updateStatus(id, AgentStatus.IDLE);
+      await this.agentRepo.updateStatus(id, AgentStatus.IDLE);
 
-      this.activityLogRepo.create({
+      await this.activityLogRepo.create({
         agentId: id,
         action: 'AGENT_IDLE_TOKEN_LIMIT',
         details: 'Agent moved to idle due to token limit exceeded',
@@ -155,10 +128,7 @@ export class AgentService {
     return agent;
   }
 
-  /**
-   * Delete an agent.
-   */
-  deleteAgent(id: string): boolean {
+  async deleteAgent(id: string): Promise<boolean> {
     return this.agentRepo.delete(id);
   }
 }

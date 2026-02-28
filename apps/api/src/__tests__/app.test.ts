@@ -1,14 +1,14 @@
 import request from 'supertest';
-import Database from 'better-sqlite3';
+import { Client } from '@libsql/client';
 import { createTestDatabase, runMigrations } from '../database';
 import { createApp } from '../app';
 
 describe('App', () => {
-  let db: Database.Database;
+  let db: Client;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     db = createTestDatabase();
-    runMigrations(db);
+    await runMigrations(db);
   });
 
   afterEach(() => {
