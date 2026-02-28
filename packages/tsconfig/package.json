@@ -1,0 +1,10 @@
+{
+  "name": "@open-agents/tsconfig",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "echo 'No tests for tsconfig package'"
+  },
+  "files": ["base.json", "nestjs.json", "expo.json"]
+}

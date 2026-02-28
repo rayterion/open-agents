@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'feat/**']
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-format:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run format:check
+
+  test-shared:
+    name: Test Shared Package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build shared package
+        run: cd packages/shared && npm run build
+
+      - name: Run tests with coverage
+        run: cd packages/shared && npm run test:coverage
+
+  test-api:
+    name: Test API
+    needs: test-shared
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build shared package
+        run: cd packages/shared && npm run build
+
+      - name: Run API tests with coverage
+        run: cd apps/api && npm run test:coverage
+
+      - name: Verify type checking
+        run: cd apps/api && npx tsc --noEmit
+
+  build:
+    name: Build All Packages
+    needs: [test-shared, test-api]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+  pr-checks:
+    name: PR Gate
+    if: github.event_name == 'pull_request'
+    needs: [lint-and-format, test-shared, test-api, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All checks passed
+        run: echo "All CI checks passed. PR is ready for review."
