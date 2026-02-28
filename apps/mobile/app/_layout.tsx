@@ -70,6 +70,30 @@ function AppTabs() {
             tabBarIcon: ({ color, size }) => <Feather name="cpu" size={size} color={color} />,
           }}
         />
+        <Tabs.Screen
+          name="blog"
+          options={{
+            title: 'Blog',
+            tabBarLabel: 'Blog',
+            tabBarIcon: ({ color, size }) => <Feather name="book-open" size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="faq"
+          options={{
+            title: 'FAQ',
+            tabBarLabel: 'FAQ',
+            tabBarIcon: ({ color, size }) => <Feather name="help-circle" size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="contact"
+          options={{
+            title: 'Contact',
+            tabBarLabel: 'Contact',
+            tabBarIcon: ({ color, size }) => <Feather name="mail" size={size} color={color} />,
+          }}
+        />
       </Tabs>
     </>
   );

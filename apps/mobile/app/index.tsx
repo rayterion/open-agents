@@ -6,13 +6,16 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { AgentTeam } from '@open-agents/shared';
 import { Colors, spacing, fontSize, borderRadius } from '../src/theme';
 import { useTheme } from '../src/context/ThemeContext';
 import { apiClient } from '../src/services/api';
+
+const GITHUB_URL = 'https://github.com/rayterion/open-agents';
+const CONTRIBUTING_URL = 'https://github.com/rayterion/open-agents/blob/main/CONTRIBUTING.md';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -154,6 +157,26 @@ export default function WelcomeScreen() {
             )}
           </View>
         )}
+      </View>
+
+      {/* Open Source CTA Buttons */}
+      <View style={styles.ctaSection}>
+        <TouchableOpacity
+          style={styles.ctaButtonPrimary}
+          onPress={() => Linking.openURL(CONTRIBUTING_URL)}
+          activeOpacity={0.7}
+        >
+          <Feather name="heart" size={20} color={colors.textInverse} />
+          <Text style={styles.ctaButtonPrimaryText}>Contribute</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.ctaButtonOutline}
+          onPress={() => Linking.openURL(GITHUB_URL)}
+          activeOpacity={0.7}
+        >
+          <Feather name="github" size={20} color={colors.primary} />
+          <Text style={styles.ctaButtonOutlineText}>View on GitHub</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Quick Links */}
@@ -438,6 +461,42 @@ function createStyles(colors: Colors) {
     fontSize: fontSize.sm,
     fontWeight: '600',
     color: colors.textPrimary,
+  },
+
+  // CTA Buttons
+  ctaSection: {
+    gap: spacing.md,
+    marginBottom: spacing.xl,
+  },
+  ctaButtonPrimary: {
+    flexDirection: 'row',
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  ctaButtonPrimaryText: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    color: colors.textInverse,
+  },
+  ctaButtonOutline: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.primary,
+    gap: spacing.sm,
+  },
+  ctaButtonOutlineText: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    color: colors.primary,
   },
 
   // Footer
