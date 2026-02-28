@@ -4,15 +4,15 @@
  */
 
 import React from 'react';
-import { Text } from 'react-native';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../src/theme';
 
 export default function RootLayout() {
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Tabs
         screenOptions={{
           headerStyle: {
@@ -20,11 +20,12 @@ export default function RootLayout() {
           },
           headerTintColor: colors.textPrimary,
           headerTitleStyle: {
-            fontWeight: '700',
+            fontWeight: '600',
           },
+          headerShadowVisible: false,
           tabBarStyle: {
             backgroundColor: colors.surface,
-            borderTopColor: colors.borderSubtle,
+            borderTopColor: colors.border,
           },
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.textMuted,
@@ -35,7 +36,7 @@ export default function RootLayout() {
           options={{
             title: 'Welcome',
             tabBarLabel: 'Home',
-            tabBarIcon: () => <Text style={{ fontSize: 20 }}>🏠</Text>,
+            tabBarIcon: ({ color, size }) => <Feather name="home" size={size} color={color} />,
           }}
         />
         <Tabs.Screen
@@ -43,7 +44,7 @@ export default function RootLayout() {
           options={{
             title: 'Projects',
             tabBarLabel: 'Projects',
-            tabBarIcon: () => <Text style={{ fontSize: 20 }}>📂</Text>,
+            tabBarIcon: ({ color, size }) => <Feather name="folder" size={size} color={color} />,
           }}
         />
         <Tabs.Screen
@@ -51,7 +52,7 @@ export default function RootLayout() {
           options={{
             title: 'Agents',
             tabBarLabel: 'Agents',
-            tabBarIcon: () => <Text style={{ fontSize: 20 }}>🤖</Text>,
+            tabBarIcon: ({ color, size }) => <Feather name="cpu" size={size} color={color} />,
           }}
         />
       </Tabs>

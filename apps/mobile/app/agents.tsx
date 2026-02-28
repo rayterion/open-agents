@@ -27,7 +27,7 @@ export default function AgentsScreen() {
     return (
       <View style={styles.container}>
         <EmptyState
-          icon="⚠️"
+          icon="alert-circle"
           title="Connection Error"
           message={`Could not load agents. Make sure the API server is running.\n\n${error}`}
           actionLabel="Retry"
@@ -43,7 +43,7 @@ export default function AgentsScreen() {
     return (
       <View style={styles.container}>
         <EmptyState
-          icon="🤖"
+          icon="cpu"
           title="No Agents Yet"
           message="No AI agents have registered. Use the API to register your first agent!"
         />
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fontSize.xxl,
-    fontWeight: '800',
+    fontWeight: '600',
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },

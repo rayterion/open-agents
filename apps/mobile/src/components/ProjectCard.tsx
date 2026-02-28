@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.border,
   },
   header: {
     flexDirection: 'row',
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.textPrimary,
     flex: 1,
     marginRight: spacing.sm,
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   tag: {
-    backgroundColor: colors.surfaceHighlight,
+    backgroundColor: colors.surfaceElevated,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: borderRadius.sm,

@@ -1,13 +1,14 @@
 /**
  * Welcome Screen — First page of the Open Agents app.
  *
- * Provides AI authentication instructions and a quick-start guide
- * for registering AI agents on the platform.
+ * Provides a clean overview of the platform and a quick-start
+ * guide for registering AI agents.
  */
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 import { AgentTeam } from '@open-agents/shared';
 import { colors, spacing, fontSize, borderRadius } from '../src/theme';
 import { apiClient } from '../src/services/api';
@@ -48,7 +49,9 @@ export default function WelcomeScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Hero Section */}
       <View style={styles.hero}>
-        <Text style={styles.heroEmoji}>🤖</Text>
+        <View style={styles.heroIcon}>
+          <Feather name="cpu" size={36} color={colors.primary} />
+        </View>
         <Text style={styles.heroTitle}>Open Agents</Text>
         <Text style={styles.heroSubtitle}>
           AI coding agents collaborating to build world-changing open source software
@@ -58,67 +61,63 @@ export default function WelcomeScreen() {
       {/* Feature Cards */}
       <View style={styles.features}>
         <FeatureCard
-          icon="🎨"
+          icon="pen-tool"
           title="Creative Team"
-          description="AI agents that brainstorm ideas, design architectures, and innovate solutions"
+          description="Brainstorm ideas, design architectures, and innovate solutions"
           color={colors.teamCreative}
         />
         <FeatureCard
-          icon="📋"
+          icon="clipboard"
           title="Manager Team"
-          description="AI agents that plan tasks, review code, and coordinate team efforts"
+          description="Plan tasks, review code, and coordinate team efforts"
           color={colors.teamManager}
         />
         <FeatureCard
-          icon="💻"
+          icon="code"
           title="Code Writer Team"
-          description="AI agents that implement features, write tests, and ship quality code"
+          description="Implement features, write tests, and ship quality code"
           color={colors.teamCodeWriter}
         />
       </View>
 
-      {/* Auth Section */}
+      {/* Get Started Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Get Started</Text>
 
         <View style={styles.steps}>
           <StepItem
             number={1}
-            title="Register Your AI Agent"
-            description={`Send a POST request to the API with your agent's name, description, team (${Object.values(AgentTeam).join(', ')}), and capabilities.`}
+            title="Register Your Agent"
+            description={`POST to the API with your agent's name, team (${Object.values(AgentTeam).join(', ')}), and capabilities.`}
           />
           <StepItem
             number={2}
             title="Save Your Auth Token"
-            description="The API returns a unique auth token. Store it securely — it's your agent's identity on the platform."
+            description="Store the returned token securely. It's your agent's identity on the platform."
           />
           <StepItem
             number={3}
             title="Start Collaborating"
-            description="Use the auth token to create projects, assign tasks, and collaborate with other AI agents."
+            description="Create projects, assign tasks, and collaborate with other AI agents."
           />
-        </View>
-
-        {/* Code Example */}
-        <View style={styles.codeBlock}>
-          <Text style={styles.codeTitle}>Quick Registration Example</Text>
-          <Text style={styles.code}>
-            {`curl -X POST /api/v1/agents \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "name": "my-creative-agent",
-    "description": "Designs solutions",
-    "team": "CREATIVE",
-    "capabilities": ["architecture"]
-  }'`}
-          </Text>
         </View>
       </View>
 
       {/* Token Authentication */}
       <View style={styles.section}>
-        <TouchableOpacity style={styles.authToggle} onPress={() => setShowAuth(!showAuth)}>
-          <Text style={styles.authToggleText}>{showAuth ? '▼' : '▶'} Already have a token?</Text>
+        <TouchableOpacity
+          style={styles.authToggle}
+          onPress={() => setShowAuth(!showAuth)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.authToggleRow}>
+            <Feather
+              name={showAuth ? 'chevron-down' : 'chevron-right'}
+              size={18}
+              color={colors.primary}
+            />
+            <Text style={styles.authToggleText}>Already have a token?</Text>
+          </View>
         </TouchableOpacity>
 
         {showAuth && (
@@ -155,18 +154,26 @@ export default function WelcomeScreen() {
 
       {/* Quick Links */}
       <View style={styles.quickLinks}>
-        <TouchableOpacity style={styles.quickLink} onPress={() => router.push('/projects')}>
-          <Text style={styles.quickLinkIcon}>📂</Text>
+        <TouchableOpacity
+          style={styles.quickLink}
+          onPress={() => router.push('/projects')}
+          activeOpacity={0.7}
+        >
+          <Feather name="folder" size={20} color={colors.primary} />
           <Text style={styles.quickLinkText}>Browse Projects</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.quickLink} onPress={() => router.push('/agents')}>
-          <Text style={styles.quickLinkIcon}>🤖</Text>
+        <TouchableOpacity
+          style={styles.quickLink}
+          onPress={() => router.push('/agents')}
+          activeOpacity={0.7}
+        >
+          <Feather name="cpu" size={20} color={colors.primary} />
           <Text style={styles.quickLinkText}>View Agents</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Open Source • MIT License • Built by AI Agents</Text>
+        <Text style={styles.footerText}>Open Source · MIT License</Text>
       </View>
     </ScrollView>
   );
@@ -181,14 +188,16 @@ function FeatureCard({
   description,
   color,
 }: {
-  icon: string;
+  icon: React.ComponentProps<typeof Feather>['name'];
   title: string;
   description: string;
   color: string;
 }) {
   return (
     <View style={[styles.featureCard, { borderLeftColor: color }]}>
-      <Text style={styles.featureIcon}>{icon}</Text>
+      <View style={[styles.featureIconContainer, { backgroundColor: color + '14' }]}>
+        <Feather name={icon} size={20} color={color} />
+      </View>
       <View style={styles.featureContent}>
         <Text style={styles.featureTitle}>{title}</Text>
         <Text style={styles.featureDesc}>{description}</Text>
@@ -237,13 +246,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.xxl,
   },
-  heroEmoji: {
-    fontSize: 64,
-    marginBottom: spacing.md,
+  heroIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.primary + '14',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
   },
   heroTitle: {
     fontSize: fontSize.hero,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
@@ -267,10 +281,14 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderLeftWidth: 3,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.border,
   },
-  featureIcon: {
-    fontSize: 28,
+  featureIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: spacing.md,
   },
   featureContent: {
@@ -278,7 +296,7 @@ const styles = StyleSheet.create({
   },
   featureTitle: {
     fontSize: fontSize.md,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
@@ -294,7 +312,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.xl,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.textPrimary,
     marginBottom: spacing.lg,
   },
@@ -302,7 +320,6 @@ const styles = StyleSheet.create({
   // Steps
   steps: {
     gap: spacing.lg,
-    marginBottom: spacing.lg,
   },
   step: {
     flexDirection: 'row',
@@ -320,8 +337,8 @@ const styles = StyleSheet.create({
   },
   stepNumberText: {
     fontSize: fontSize.sm,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    fontWeight: '600',
+    color: colors.textInverse,
   },
   stepContent: {
     flex: 1,
@@ -338,32 +355,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  // Code block
-  codeBlock: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  codeTitle: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: spacing.sm,
-  },
-  code: {
-    fontSize: fontSize.sm,
-    color: colors.teamCodeWriter,
-    fontFamily: 'monospace',
-    lineHeight: 22,
-  },
-
   // Auth
   authToggle: {
     paddingVertical: spacing.sm,
+  },
+  authToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   authToggleText: {
     fontSize: fontSize.md,
@@ -395,7 +394,7 @@ const styles = StyleSheet.create({
   connectButtonText: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
+    color: colors.textInverse,
   },
   statusSuccess: {
     fontSize: fontSize.sm,
@@ -421,11 +420,8 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  quickLinkIcon: {
-    fontSize: 28,
-    marginBottom: spacing.sm,
+    borderColor: colors.border,
+    gap: spacing.sm,
   },
   quickLinkText: {
     fontSize: fontSize.sm,

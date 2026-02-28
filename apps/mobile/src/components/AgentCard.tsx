@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Agent, AgentTeam, AgentStatus } from '@open-agents/shared';
 import { colors, spacing, fontSize, borderRadius } from '../theme';
 
@@ -19,10 +20,16 @@ const TEAM_COLORS: Record<AgentTeam, string> = {
   [AgentTeam.CODE_WRITER]: colors.teamCodeWriter,
 };
 
+const TEAM_ICONS: Record<AgentTeam, React.ComponentProps<typeof Feather>['name']> = {
+  [AgentTeam.CREATIVE]: 'pen-tool',
+  [AgentTeam.MANAGER]: 'clipboard',
+  [AgentTeam.CODE_WRITER]: 'code',
+};
+
 const TEAM_LABELS: Record<AgentTeam, string> = {
-  [AgentTeam.CREATIVE]: '🎨 Creative',
-  [AgentTeam.MANAGER]: '📋 Manager',
-  [AgentTeam.CODE_WRITER]: '💻 Code Writer',
+  [AgentTeam.CREATIVE]: 'Creative',
+  [AgentTeam.MANAGER]: 'Manager',
+  [AgentTeam.CODE_WRITER]: 'Code Writer',
 };
 
 const STATUS_COLORS: Record<AgentStatus, string> = {
@@ -34,6 +41,7 @@ const STATUS_COLORS: Record<AgentStatus, string> = {
 
 export function AgentCard({ agent, onPress }: AgentCardProps) {
   const teamColor = TEAM_COLORS[agent.team] ?? colors.textMuted;
+  const teamIcon = TEAM_ICONS[agent.team] ?? 'help-circle';
   const statusColor = STATUS_COLORS[agent.status] ?? colors.textMuted;
 
   return (
@@ -51,7 +59,10 @@ export function AgentCard({ agent, onPress }: AgentCardProps) {
           </Text>
           <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
         </View>
-        <Text style={[styles.team, { color: teamColor }]}>{TEAM_LABELS[agent.team]}</Text>
+        <View style={styles.teamRow}>
+          <Feather name={teamIcon} size={14} color={teamColor} />
+          <Text style={[styles.team, { color: teamColor }]}>{TEAM_LABELS[agent.team]}</Text>
+        </View>
       </View>
 
       <Text style={styles.description} numberOfLines={2}>
@@ -68,7 +79,7 @@ export function AgentCard({ agent, onPress }: AgentCardProps) {
         </View>
 
         <View style={styles.reputation}>
-          <Text style={styles.repLabel}>⭐</Text>
+          <Feather name="award" size={14} color={colors.primary} />
           <Text style={styles.repValue}>{agent.reputation}</Text>
         </View>
       </View>
@@ -83,7 +94,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.border,
     borderLeftWidth: 3,
   },
   header: {
@@ -96,7 +107,7 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.textPrimary,
     flex: 1,
     marginRight: spacing.sm,
@@ -106,9 +117,14 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
+  teamRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   team: {
     fontSize: fontSize.sm,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   description: {
     fontSize: fontSize.sm,
@@ -128,7 +144,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   capBadge: {
-    backgroundColor: colors.surfaceHighlight,
+    backgroundColor: colors.surfaceElevated,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: borderRadius.sm,
@@ -142,12 +158,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
   },
-  repLabel: {
-    fontSize: fontSize.sm,
-  },
   repValue: {
     fontSize: fontSize.md,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.textPrimary,
   },
 });

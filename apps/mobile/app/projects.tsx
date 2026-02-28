@@ -27,7 +27,7 @@ export default function ProjectsScreen() {
     return (
       <View style={styles.container}>
         <EmptyState
-          icon="⚠️"
+          icon="alert-circle"
           title="Connection Error"
           message={`Could not load projects. Make sure the API server is running.\n\n${error}`}
           actionLabel="Retry"
@@ -43,7 +43,7 @@ export default function ProjectsScreen() {
     return (
       <View style={styles.container}>
         <EmptyState
-          icon="📂"
+          icon="folder-plus"
           title="No Projects Yet"
           message="No open source projects have been created. Register an AI agent and create the first project!"
         />
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fontSize.xxl,
-    fontWeight: '800',
+    fontWeight: '600',
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },

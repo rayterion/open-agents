@@ -1,46 +1,46 @@
 /**
  * Design system tokens for the Open Agents mobile app.
- * Clean, modern dark theme inspired by developer tools.
+ * Clean, modern light theme with warm neutrals and teal accent.
  */
 
 export const colors = {
   // Core palette
-  primary: '#6366F1', // Indigo
-  primaryLight: '#818CF8',
-  primaryDark: '#4F46E5',
+  primary: '#0D9488', // Teal-600
+  primaryLight: '#14B8A6', // Teal-500
+  primaryDark: '#0F766E', // Teal-700
 
   // Semantic colors
-  success: '#22C55E',
-  warning: '#F59E0B',
-  error: '#EF4444',
-  info: '#3B82F6',
+  success: '#16A34A', // Green-600
+  warning: '#D97706', // Amber-600
+  error: '#DC2626', // Red-600
+  info: '#2563EB', // Blue-600
 
-  // Background layers (dark theme)
-  background: '#0A0E1A',
-  surface: '#111827',
-  surfaceElevated: '#1F2937',
-  surfaceHighlight: '#374151',
+  // Background layers (light theme)
+  background: '#FAFAF9', // Stone-50
+  surface: '#FFFFFF',
+  surfaceElevated: '#F5F5F4', // Stone-100
+  surfaceHighlight: '#E7E5E4', // Stone-200
 
   // Text
-  textPrimary: '#F9FAFB',
-  textSecondary: '#9CA3AF',
-  textMuted: '#6B7280',
-  textInverse: '#111827',
+  textPrimary: '#1C1917', // Stone-900
+  textSecondary: '#78716C', // Stone-500
+  textMuted: '#A8A29E', // Stone-400
+  textInverse: '#FAFAF9',
 
   // Borders
-  border: '#374151',
-  borderSubtle: '#1F2937',
+  border: '#E7E5E4', // Stone-200
+  borderSubtle: '#F5F5F4', // Stone-100
 
   // Team colors
-  teamCreative: '#A78BFA',
-  teamManager: '#F59E0B',
-  teamCodeWriter: '#34D399',
+  teamCreative: '#7C3AED', // Violet-600
+  teamManager: '#D97706', // Amber-600
+  teamCodeWriter: '#059669', // Emerald-600
 
   // Status colors
-  statusActive: '#22C55E',
-  statusIdle: '#F59E0B',
-  statusPending: '#3B82F6',
-  statusSuspended: '#EF4444',
+  statusActive: '#16A34A',
+  statusIdle: '#D97706',
+  statusPending: '#2563EB',
+  statusSuspended: '#DC2626',
 } as const;
 
 export const spacing = {

@@ -1,13 +1,15 @@
 /**
  * Empty state component shown when no data is available.
+ * Uses Feather icons instead of emojis for a clean, professional look.
  */
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { colors, spacing, fontSize, borderRadius } from '../theme';
 
 interface EmptyStateProps {
-  icon: string;
+  icon: React.ComponentProps<typeof Feather>['name'];
   title: string;
   message: string;
   actionLabel?: string;
@@ -17,7 +19,9 @@ interface EmptyStateProps {
 export function EmptyState({ icon, title, message, actionLabel, onAction }: EmptyStateProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.icon}>{icon}</Text>
+      <View style={styles.iconContainer}>
+        <Feather name={icon} size={32} color={colors.primary} />
+      </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.message}>{message}</Text>
       {actionLabel && onAction && (
@@ -36,13 +40,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.xxl,
   },
-  icon: {
-    fontSize: 48,
-    marginBottom: spacing.md,
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.surfaceElevated,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
   },
   title: {
     fontSize: fontSize.xl,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.textPrimary,
     marginBottom: spacing.sm,
     textAlign: 'center',
@@ -63,6 +72,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
+    color: colors.textInverse,
   },
 });

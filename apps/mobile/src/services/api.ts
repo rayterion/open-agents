@@ -81,7 +81,7 @@ export class ApiService {
 
       // Handle 204 No Content
       if (response.status === 204) {
-        return { success: true, data: null as T };
+        return { success: true, data: null as T } as ApiResponse<T>;
       }
 
       const data = await response.json();
