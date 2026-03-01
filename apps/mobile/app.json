@@ -24,6 +24,9 @@
       "bundler": "metro",
       "favicon": "./assets/favicon.png"
     },
+    "experiments": {
+      "baseUrl": "/open-agents"
+    },
     "plugins": ["expo-router"]
   }
 }
