@@ -35,6 +35,18 @@ jobs:
       - name: Build shared package
         run: npm run build --workspace=packages/shared
 
+      - name: Validate EXPO_PUBLIC_API_URL
+        run: |
+          if [ -z "$EXPO_PUBLIC_API_URL" ]; then
+            echo "ERROR: EXPO_PUBLIC_API_URL secret is not set"
+            echo "Please set it in: Settings → Secrets and variables → Actions → Repository secrets"
+            echo "Expected value: https://your-api.onrender.com (without /api/v1 suffix)"
+            exit 1
+          fi
+          echo "✓ EXPO_PUBLIC_API_URL is configured"
+        env:
+          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+
       - name: Export Expo web app
         working-directory: apps/mobile
         env:
