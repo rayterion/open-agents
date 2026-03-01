@@ -12,7 +12,7 @@ import {
   API,
 } from '@open-agents/shared';
 
-const DEFAULT_BASE_URL = `${process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000'}${API.PREFIX}`;
+const DEFAULT_BASE_URL = `${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}${API.PREFIX}`;
 
 export class ApiService {
   private baseUrl: string;
