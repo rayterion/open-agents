@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { Client } from '@libsql/client';
 import { v4 as uuidv4 } from 'uuid';
 import {
   Agent,
@@ -58,9 +58,9 @@ function rowToAgent(row: AgentRow): Agent {
 }
 
 export class AgentRepository {
-  constructor(private db: Database.Database) {}
+  constructor(private db: Client) {}
 
-  create(dto: CreateAgentDto): Agent {
+  async create(dto: CreateAgentDto): Promise<Agent> {
     const id = uuidv4();
     const authToken = uuidv4();
     const budget = createDefaultTokenBudget({
@@ -69,149 +69,137 @@ export class AgentRepository {
       maxTokensPerMonth: dto.maxTokensPerMonth,
     });
 
-    const stmt = this.db.prepare(`
-      INSERT INTO agents (
+    await this.db.execute({
+      sql: `INSERT INTO agents (
         id, name, description, team, status, capabilities, reputation, auth_token,
         max_tokens_per_hour, max_tokens_per_day, max_tokens_per_month,
         used_tokens_current_hour, used_tokens_current_day, used_tokens_current_month,
         hourly_reset_at, daily_reset_at, monthly_reset_at
-      ) VALUES (?, ?, ?, ?, 'PENDING', ?, 0, ?, ?, ?, ?, 0, 0, 0, ?, ?, ?)
-    `);
+      ) VALUES (?, ?, ?, ?, 'PENDING', ?, 0, ?, ?, ?, ?, 0, 0, 0, ?, ?, ?)`,
+      args: [
+        id,
+        dto.name,
+        dto.description,
+        dto.team,
+        JSON.stringify(dto.capabilities),
+        authToken,
+        budget.maxTokensPerHour,
+        budget.maxTokensPerDay,
+        budget.maxTokensPerMonth,
+        budget.hourlyResetAt,
+        budget.dailyResetAt,
+        budget.monthlyResetAt,
+      ],
+    });
 
-    stmt.run(
-      id,
-      dto.name,
-      dto.description,
-      dto.team,
-      JSON.stringify(dto.capabilities),
-      authToken,
-      budget.maxTokensPerHour,
-      budget.maxTokensPerDay,
-      budget.maxTokensPerMonth,
-      budget.hourlyResetAt,
-      budget.dailyResetAt,
-      budget.monthlyResetAt,
-    );
-
-    return this.findById(id)!;
+    return (await this.findById(id))!;
   }
 
-  findById(id: string): Agent | null {
-    const row = this.db.prepare('SELECT * FROM agents WHERE id = ?').get(id) as
-      | AgentRow
-      | undefined;
+  async findById(id: string): Promise<Agent | null> {
+    const result = await this.db.execute({
+      sql: 'SELECT * FROM agents WHERE id = ?',
+      args: [id],
+    });
+    const row = result.rows[0] as unknown as AgentRow | undefined;
     return row ? rowToAgent(row) : null;
   }
 
-  findByAuthToken(token: string): Agent | null {
-    const row = this.db.prepare('SELECT * FROM agents WHERE auth_token = ?').get(token) as
-      | AgentRow
-      | undefined;
+  async findByAuthToken(token: string): Promise<Agent | null> {
+    const result = await this.db.execute({
+      sql: 'SELECT * FROM agents WHERE auth_token = ?',
+      args: [token],
+    });
+    const row = result.rows[0] as unknown as AgentRow | undefined;
     return row ? rowToAgent(row) : null;
   }
 
-  findAll(page: number, pageSize: number): { agents: Agent[]; total: number } {
-    const total = (
-      this.db.prepare('SELECT COUNT(*) as count FROM agents').get() as { count: number }
-    ).count;
+  async findAll(page: number, pageSize: number): Promise<{ agents: Agent[]; total: number }> {
+    const countResult = await this.db.execute('SELECT COUNT(*) as count FROM agents');
+    const total = Number((countResult.rows[0] as any).count);
 
-    const rows = this.db
-      .prepare('SELECT * FROM agents ORDER BY created_at DESC LIMIT ? OFFSET ?')
-      .all(pageSize, (page - 1) * pageSize) as AgentRow[];
+    const result = await this.db.execute({
+      sql: 'SELECT * FROM agents ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      args: [pageSize, (page - 1) * pageSize],
+    });
 
-    return { agents: rows.map(rowToAgent), total };
+    return { agents: (result.rows as unknown as AgentRow[]).map(rowToAgent), total };
   }
 
-  findByTeam(team: AgentTeam, page: number, pageSize: number): { agents: Agent[]; total: number } {
-    const total = (
-      this.db.prepare('SELECT COUNT(*) as count FROM agents WHERE team = ?').get(team) as {
-        count: number;
-      }
-    ).count;
+  async findByTeam(team: AgentTeam, page: number, pageSize: number): Promise<{ agents: Agent[]; total: number }> {
+    const countResult = await this.db.execute({
+      sql: 'SELECT COUNT(*) as count FROM agents WHERE team = ?',
+      args: [team],
+    });
+    const total = Number((countResult.rows[0] as any).count);
 
-    const rows = this.db
-      .prepare('SELECT * FROM agents WHERE team = ? ORDER BY created_at DESC LIMIT ? OFFSET ?')
-      .all(team, pageSize, (page - 1) * pageSize) as AgentRow[];
+    const result = await this.db.execute({
+      sql: 'SELECT * FROM agents WHERE team = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      args: [team, pageSize, (page - 1) * pageSize],
+    });
 
-    return { agents: rows.map(rowToAgent), total };
+    return { agents: (result.rows as unknown as AgentRow[]).map(rowToAgent), total };
   }
 
-  update(id: string, dto: UpdateAgentDto): Agent | null {
-    const existing = this.findById(id);
+  async update(id: string, dto: UpdateAgentDto): Promise<Agent | null> {
+    const existing = await this.findById(id);
     if (!existing) return null;
 
     const fields: string[] = [];
     const values: unknown[] = [];
 
-    if (dto.name !== undefined) {
-      fields.push('name = ?');
-      values.push(dto.name);
-    }
-    if (dto.description !== undefined) {
-      fields.push('description = ?');
-      values.push(dto.description);
-    }
-    if (dto.team !== undefined) {
-      fields.push('team = ?');
-      values.push(dto.team);
-    }
-    if (dto.capabilities !== undefined) {
-      fields.push('capabilities = ?');
-      values.push(JSON.stringify(dto.capabilities));
-    }
-    if (dto.maxTokensPerHour !== undefined) {
-      fields.push('max_tokens_per_hour = ?');
-      values.push(dto.maxTokensPerHour);
-    }
-    if (dto.maxTokensPerDay !== undefined) {
-      fields.push('max_tokens_per_day = ?');
-      values.push(dto.maxTokensPerDay);
-    }
-    if (dto.maxTokensPerMonth !== undefined) {
-      fields.push('max_tokens_per_month = ?');
-      values.push(dto.maxTokensPerMonth);
-    }
+    if (dto.name !== undefined) { fields.push('name = ?'); values.push(dto.name); }
+    if (dto.description !== undefined) { fields.push('description = ?'); values.push(dto.description); }
+    if (dto.team !== undefined) { fields.push('team = ?'); values.push(dto.team); }
+    if (dto.capabilities !== undefined) { fields.push('capabilities = ?'); values.push(JSON.stringify(dto.capabilities)); }
+    if (dto.maxTokensPerHour !== undefined) { fields.push('max_tokens_per_hour = ?'); values.push(dto.maxTokensPerHour); }
+    if (dto.maxTokensPerDay !== undefined) { fields.push('max_tokens_per_day = ?'); values.push(dto.maxTokensPerDay); }
+    if (dto.maxTokensPerMonth !== undefined) { fields.push('max_tokens_per_month = ?'); values.push(dto.maxTokensPerMonth); }
 
     if (fields.length === 0) return existing;
 
     fields.push("updated_at = datetime('now')");
     values.push(id);
 
-    this.db.prepare(`UPDATE agents SET ${fields.join(', ')} WHERE id = ?`).run(...values);
+    await this.db.execute({
+      sql: `UPDATE agents SET ${fields.join(', ')} WHERE id = ?`,
+      args: values as any,
+    });
 
     return this.findById(id);
   }
 
-  updateStatus(id: string, status: AgentStatus): Agent | null {
-    this.db
-      .prepare("UPDATE agents SET status = ?, updated_at = datetime('now') WHERE id = ?")
-      .run(status, id);
+  async updateStatus(id: string, status: AgentStatus): Promise<Agent | null> {
+    await this.db.execute({
+      sql: "UPDATE agents SET status = ?, updated_at = datetime('now') WHERE id = ?",
+      args: [status, id],
+    });
     return this.findById(id);
   }
 
-  updateTokenUsage(id: string, tokensUsed: number): void {
-    this.db
-      .prepare(
-        `UPDATE agents SET
+  async updateTokenUsage(id: string, tokensUsed: number): Promise<void> {
+    await this.db.execute({
+      sql: `UPDATE agents SET
           used_tokens_current_hour = used_tokens_current_hour + ?,
           used_tokens_current_day = used_tokens_current_day + ?,
           used_tokens_current_month = used_tokens_current_month + ?,
           updated_at = datetime('now')
         WHERE id = ?`,
-      )
-      .run(tokensUsed, tokensUsed, tokensUsed, id);
+      args: [tokensUsed, tokensUsed, tokensUsed, id],
+    });
   }
 
-  updateReputation(id: string, points: number): void {
-    this.db
-      .prepare(
-        "UPDATE agents SET reputation = reputation + ?, updated_at = datetime('now') WHERE id = ?",
-      )
-      .run(points, id);
+  async updateReputation(id: string, points: number): Promise<void> {
+    await this.db.execute({
+      sql: "UPDATE agents SET reputation = reputation + ?, updated_at = datetime('now') WHERE id = ?",
+      args: [points, id],
+    });
   }
 
-  delete(id: string): boolean {
-    const result = this.db.prepare('DELETE FROM agents WHERE id = ?').run(id);
-    return result.changes > 0;
+  async delete(id: string): Promise<boolean> {
+    const result = await this.db.execute({
+      sql: 'DELETE FROM agents WHERE id = ?',
+      args: [id],
+    });
+    return result.rowsAffected > 0;
   }
 }

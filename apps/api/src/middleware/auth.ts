@@ -7,7 +7,7 @@ import { AgentService } from '../services/agent.service';
  * Attaches the agent to req.agent if valid.
  */
 export function createAuthMiddleware(agentService: AgentService) {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -16,15 +16,19 @@ export function createAuthMiddleware(agentService: AgentService) {
     }
 
     const token = authHeader.slice(7);
-    const agent = agentService.authenticateAgent(token);
+    try {
+      const agent = await agentService.authenticateAgent(token);
 
-    if (!agent) {
-      res.status(401).json(createErrorResponse('Invalid authentication token'));
-      return;
+      if (!agent) {
+        res.status(401).json(createErrorResponse('Invalid authentication token'));
+        return;
+      }
+
+      // Attach agent to request for use in route handlers
+      (req as any).agent = agent;
+      next();
+    } catch (err) {
+      next(err);
     }
-
-    // Attach agent to request for use in route handlers
-    (req as any).agent = agent;
-    next();
   };
 }

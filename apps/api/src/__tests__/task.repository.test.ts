@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { Client } from '@libsql/client';
 import { createTestDatabase, runMigrations } from '../database';
 import { TaskRepository } from '../repositories/task.repository';
 import { AgentRepository } from '../repositories/agent.repository';
@@ -6,21 +6,21 @@ import { ProjectRepository } from '../repositories/project.repository';
 import { AgentTeam, TaskStatus, TaskPriority } from '@open-agents/shared';
 
 describe('TaskRepository', () => {
-  let db: Database.Database;
+  let db: Client;
   let taskRepo: TaskRepository;
   let agentRepo: AgentRepository;
   let projectRepo: ProjectRepository;
   let testAgentId: string;
   let testProjectId: string;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     db = createTestDatabase();
-    runMigrations(db);
+    await runMigrations(db);
     taskRepo = new TaskRepository(db);
     agentRepo = new AgentRepository(db);
     projectRepo = new ProjectRepository(db);
 
-    const agent = agentRepo.create({
+    const agent = await agentRepo.create({
       name: 'TestAgent',
       description: 'Test agent',
       team: AgentTeam.MANAGER,
@@ -28,7 +28,7 @@ describe('TaskRepository', () => {
     });
     testAgentId = agent.id;
 
-    const project = projectRepo.create(
+    const project = await projectRepo.create(
       {
         name: 'TestProject',
         description: 'Test project',
@@ -58,8 +58,8 @@ describe('TaskRepository', () => {
   };
 
   describe('create', () => {
-    it('should create a task', () => {
-      const task = createTestTask();
+    it('should create a task', async () => {
+      const task = await createTestTask();
 
       expect(task.id).toBeDefined();
       expect(task.title).toBe('Test Task');
@@ -73,8 +73,8 @@ describe('TaskRepository', () => {
       expect(task.assignedAgentId).toBeNull();
     });
 
-    it('should default estimatedTokens to 0', () => {
-      const task = taskRepo.create(
+    it('should default estimatedTokens to 0', async () => {
+      const task = await taskRepo.create(
         {
           title: 'No estimate',
           description: 'No estimate',
@@ -88,55 +88,55 @@ describe('TaskRepository', () => {
   });
 
   describe('findById', () => {
-    it('should find a task by ID', () => {
-      const created = createTestTask();
-      const found = taskRepo.findById(created.id);
+    it('should find a task by ID', async () => {
+      const created = await createTestTask();
+      const found = await taskRepo.findById(created.id);
       expect(found).not.toBeNull();
       expect(found!.title).toBe('Test Task');
     });
 
-    it('should return null for non-existent task', () => {
-      expect(taskRepo.findById('non-existent')).toBeNull();
+    it('should return null for non-existent task', async () => {
+      expect(await taskRepo.findById('non-existent')).toBeNull();
     });
   });
 
   describe('findByProject', () => {
-    it('should find tasks by project', () => {
+    it('should find tasks by project', async () => {
       for (let i = 0; i < 3; i++) {
-        createTestTask(`Task ${i}`);
+        await createTestTask(`Task ${i}`);
       }
 
-      const result = taskRepo.findByProject(testProjectId, 1, 20);
+      const result = await taskRepo.findByProject(testProjectId, 1, 20);
       expect(result.tasks).toHaveLength(3);
       expect(result.total).toBe(3);
     });
 
-    it('should paginate results', () => {
+    it('should paginate results', async () => {
       for (let i = 0; i < 5; i++) {
-        createTestTask(`Task ${i}`);
+        await createTestTask(`Task ${i}`);
       }
 
-      const page1 = taskRepo.findByProject(testProjectId, 1, 2);
+      const page1 = await taskRepo.findByProject(testProjectId, 1, 2);
       expect(page1.tasks).toHaveLength(2);
       expect(page1.total).toBe(5);
     });
   });
 
   describe('findByAgent', () => {
-    it('should find tasks by assigned agent', () => {
-      const task = createTestTask();
-      taskRepo.assignAgent(task.id, testAgentId);
+    it('should find tasks by assigned agent', async () => {
+      const task = await createTestTask();
+      await taskRepo.assignAgent(task.id, testAgentId);
 
-      const result = taskRepo.findByAgent(testAgentId, 1, 20);
+      const result = await taskRepo.findByAgent(testAgentId, 1, 20);
       expect(result.tasks).toHaveLength(1);
       expect(result.total).toBe(1);
     });
   });
 
   describe('updateStatus', () => {
-    it('should update task status', () => {
-      const task = createTestTask();
-      const updated = taskRepo.updateStatus(task.id, TaskStatus.IN_PROGRESS);
+    it('should update task status', async () => {
+      const task = await createTestTask();
+      const updated = await taskRepo.updateStatus(task.id, TaskStatus.IN_PROGRESS);
 
       expect(updated).not.toBeNull();
       expect(updated!.status).toBe(TaskStatus.IN_PROGRESS);
@@ -144,9 +144,9 @@ describe('TaskRepository', () => {
   });
 
   describe('assignAgent', () => {
-    it('should assign agent and set status to TODO', () => {
-      const task = createTestTask();
-      const assigned = taskRepo.assignAgent(task.id, testAgentId);
+    it('should assign agent and set status to TODO', async () => {
+      const task = await createTestTask();
+      const assigned = await taskRepo.assignAgent(task.id, testAgentId);
 
       expect(assigned).not.toBeNull();
       expect(assigned!.assignedAgentId).toBe(testAgentId);
@@ -155,25 +155,25 @@ describe('TaskRepository', () => {
   });
 
   describe('updateTokensUsed', () => {
-    it('should increment tokens used', () => {
-      const task = createTestTask();
-      taskRepo.updateTokensUsed(task.id, 2000);
-      taskRepo.updateTokensUsed(task.id, 1000);
+    it('should increment tokens used', async () => {
+      const task = await createTestTask();
+      await taskRepo.updateTokensUsed(task.id, 2000);
+      await taskRepo.updateTokensUsed(task.id, 1000);
 
-      const found = taskRepo.findById(task.id);
+      const found = await taskRepo.findById(task.id);
       expect(found!.actualTokensUsed).toBe(3000);
     });
   });
 
   describe('delete', () => {
-    it('should delete a task', () => {
-      const task = createTestTask();
-      expect(taskRepo.delete(task.id)).toBe(true);
-      expect(taskRepo.findById(task.id)).toBeNull();
+    it('should delete a task', async () => {
+      const task = await createTestTask();
+      expect(await taskRepo.delete(task.id)).toBe(true);
+      expect(await taskRepo.findById(task.id)).toBeNull();
     });
 
-    it('should return false for non-existent task', () => {
-      expect(taskRepo.delete('non-existent')).toBe(false);
+    it('should return false for non-existent task', async () => {
+      expect(await taskRepo.delete('non-existent')).toBe(false);
     });
   });
 });

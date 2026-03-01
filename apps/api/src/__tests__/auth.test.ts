@@ -19,7 +19,7 @@ describe('Auth Middleware', () => {
   };
 
   const mockAgentService = {
-    authenticateAgent: jest.fn((token: string) => {
+    authenticateAgent: jest.fn(async (token: string) => {
       return token === 'valid-token' ? mockAgent : null;
     }),
   } as unknown as AgentService;
@@ -43,48 +43,48 @@ describe('Auth Middleware', () => {
     return jest.fn();
   }
 
-  it('should attach agent to request with valid token', () => {
+  it('should attach agent to request with valid token', async () => {
     const middleware = createAuthMiddleware(mockAgentService);
     const req = mockRequest('Bearer valid-token');
     const res = mockResponse();
     const next = mockNext();
 
-    middleware(req, res, next);
+    await middleware(req, res, next);
 
     expect(next).toHaveBeenCalled();
     expect((req as any).agent).toBe(mockAgent);
   });
 
-  it('should return 401 when no auth header', () => {
+  it('should return 401 when no auth header', async () => {
     const middleware = createAuthMiddleware(mockAgentService);
     const req = mockRequest();
     const res = mockResponse();
     const next = mockNext();
 
-    middleware(req, res, next);
+    await middleware(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('should return 401 when auth header is not Bearer', () => {
+  it('should return 401 when auth header is not Bearer', async () => {
     const middleware = createAuthMiddleware(mockAgentService);
     const req = mockRequest('Basic token');
     const res = mockResponse();
     const next = mockNext();
 
-    middleware(req, res, next);
+    await middleware(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
-  it('should return 401 when token is invalid', () => {
+  it('should return 401 when token is invalid', async () => {
     const middleware = createAuthMiddleware(mockAgentService);
     const req = mockRequest('Bearer invalid-token');
     const res = mockResponse();
     const next = mockNext();
 
-    middleware(req, res, next);
+    await middleware(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(next).not.toHaveBeenCalled();

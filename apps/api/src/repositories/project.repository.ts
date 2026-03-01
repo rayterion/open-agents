@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { Client } from '@libsql/client';
 import { v4 as uuidv4 } from 'uuid';
 import { Project, ProjectStatus, CreateProjectDto } from '@open-agents/shared';
 
@@ -30,105 +30,115 @@ function rowToProject(row: ProjectRow, assignedAgentIds: string[] = []): Project
 }
 
 export class ProjectRepository {
-  constructor(private db: Database.Database) {}
+  constructor(private db: Client) {}
 
-  create(dto: CreateProjectDto, agentId: string): Project {
+  async create(dto: CreateProjectDto, agentId: string): Promise<Project> {
     const id = uuidv4();
 
-    this.db
-      .prepare(
-        `INSERT INTO projects (id, name, description, repository_url, tags, created_by_agent_id)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-      )
-      .run(id, dto.name, dto.description, dto.repositoryUrl, JSON.stringify(dto.tags), agentId);
+    await this.db.execute({
+      sql: `INSERT INTO projects (id, name, description, repository_url, tags, created_by_agent_id)
+            VALUES (?, ?, ?, ?, ?, ?)`,
+      args: [id, dto.name, dto.description, dto.repositoryUrl, JSON.stringify(dto.tags), agentId],
+    });
 
     // Assign creator to the project
-    this.db
-      .prepare('INSERT INTO project_agents (project_id, agent_id) VALUES (?, ?)')
-      .run(id, agentId);
+    await this.db.execute({
+      sql: 'INSERT INTO project_agents (project_id, agent_id) VALUES (?, ?)',
+      args: [id, agentId],
+    });
 
-    return this.findById(id)!;
+    return (await this.findById(id))!;
   }
 
-  findById(id: string): Project | null {
-    const row = this.db.prepare('SELECT * FROM projects WHERE id = ?').get(id) as
-      | ProjectRow
-      | undefined;
+  async findById(id: string): Promise<Project | null> {
+    const result = await this.db.execute({
+      sql: 'SELECT * FROM projects WHERE id = ?',
+      args: [id],
+    });
 
-    if (!row) return null;
+    if (!result.rows[0]) return null;
 
-    const agentIds = this.getAssignedAgentIds(id);
+    const row = result.rows[0] as unknown as ProjectRow;
+    const agentIds = await this.getAssignedAgentIds(id);
     return rowToProject(row, agentIds);
   }
 
-  findAll(page: number, pageSize: number): { projects: Project[]; total: number } {
-    const total = (
-      this.db.prepare('SELECT COUNT(*) as count FROM projects').get() as { count: number }
-    ).count;
+  async findAll(page: number, pageSize: number): Promise<{ projects: Project[]; total: number }> {
+    const countResult = await this.db.execute('SELECT COUNT(*) as count FROM projects');
+    const total = Number((countResult.rows[0] as any).count);
 
-    const rows = this.db
-      .prepare('SELECT * FROM projects ORDER BY created_at DESC LIMIT ? OFFSET ?')
-      .all(pageSize, (page - 1) * pageSize) as ProjectRow[];
-
-    const projects = rows.map((row) => {
-      const agentIds = this.getAssignedAgentIds(row.id);
-      return rowToProject(row, agentIds);
+    const result = await this.db.execute({
+      sql: 'SELECT * FROM projects ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      args: [pageSize, (page - 1) * pageSize],
     });
+
+    const projects = await Promise.all(
+      (result.rows as unknown as ProjectRow[]).map(async (row) => {
+        const agentIds = await this.getAssignedAgentIds(row.id);
+        return rowToProject(row, agentIds);
+      }),
+    );
 
     return { projects, total };
   }
 
-  findByStatus(
-    status: ProjectStatus,
-    page: number,
-    pageSize: number,
-  ): { projects: Project[]; total: number } {
-    const total = (
-      this.db.prepare('SELECT COUNT(*) as count FROM projects WHERE status = ?').get(status) as {
-        count: number;
-      }
-    ).count;
-
-    const rows = this.db
-      .prepare('SELECT * FROM projects WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?')
-      .all(status, pageSize, (page - 1) * pageSize) as ProjectRow[];
-
-    const projects = rows.map((row) => {
-      const agentIds = this.getAssignedAgentIds(row.id);
-      return rowToProject(row, agentIds);
+  async findByStatus(status: ProjectStatus, page: number, pageSize: number): Promise<{ projects: Project[]; total: number }> {
+    const countResult = await this.db.execute({
+      sql: 'SELECT COUNT(*) as count FROM projects WHERE status = ?',
+      args: [status],
     });
+    const total = Number((countResult.rows[0] as any).count);
+
+    const result = await this.db.execute({
+      sql: 'SELECT * FROM projects WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      args: [status, pageSize, (page - 1) * pageSize],
+    });
+
+    const projects = await Promise.all(
+      (result.rows as unknown as ProjectRow[]).map(async (row) => {
+        const agentIds = await this.getAssignedAgentIds(row.id);
+        return rowToProject(row, agentIds);
+      }),
+    );
 
     return { projects, total };
   }
 
-  updateStatus(id: string, status: ProjectStatus): Project | null {
-    this.db
-      .prepare("UPDATE projects SET status = ?, updated_at = datetime('now') WHERE id = ?")
-      .run(status, id);
+  async updateStatus(id: string, status: ProjectStatus): Promise<Project | null> {
+    await this.db.execute({
+      sql: "UPDATE projects SET status = ?, updated_at = datetime('now') WHERE id = ?",
+      args: [status, id],
+    });
     return this.findById(id);
   }
 
-  assignAgent(projectId: string, agentId: string): void {
-    this.db
-      .prepare('INSERT OR IGNORE INTO project_agents (project_id, agent_id) VALUES (?, ?)')
-      .run(projectId, agentId);
+  async assignAgent(projectId: string, agentId: string): Promise<void> {
+    await this.db.execute({
+      sql: 'INSERT OR IGNORE INTO project_agents (project_id, agent_id) VALUES (?, ?)',
+      args: [projectId, agentId],
+    });
   }
 
-  removeAgent(projectId: string, agentId: string): void {
-    this.db
-      .prepare('DELETE FROM project_agents WHERE project_id = ? AND agent_id = ?')
-      .run(projectId, agentId);
+  async removeAgent(projectId: string, agentId: string): Promise<void> {
+    await this.db.execute({
+      sql: 'DELETE FROM project_agents WHERE project_id = ? AND agent_id = ?',
+      args: [projectId, agentId],
+    });
   }
 
-  delete(id: string): boolean {
-    const result = this.db.prepare('DELETE FROM projects WHERE id = ?').run(id);
-    return result.changes > 0;
+  async delete(id: string): Promise<boolean> {
+    const result = await this.db.execute({
+      sql: 'DELETE FROM projects WHERE id = ?',
+      args: [id],
+    });
+    return result.rowsAffected > 0;
   }
 
-  private getAssignedAgentIds(projectId: string): string[] {
-    const rows = this.db
-      .prepare('SELECT agent_id FROM project_agents WHERE project_id = ?')
-      .all(projectId) as { agent_id: string }[];
-    return rows.map((r) => r.agent_id);
+  private async getAssignedAgentIds(projectId: string): Promise<string[]> {
+    const result = await this.db.execute({
+      sql: 'SELECT agent_id FROM project_agents WHERE project_id = ?',
+      args: [projectId],
+    });
+    return (result.rows as unknown as { agent_id: string }[]).map((r) => r.agent_id);
   }
 }

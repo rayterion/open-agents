@@ -19,13 +19,12 @@
     "helmet": "^8.0.0",
     "uuid": "^11.1.0",
     "zod": "^3.24.0",
-    "better-sqlite3": "^11.8.0"
+    "@libsql/client": "^0.14.0"
   },
   "devDependencies": {
     "@open-agents/tsconfig": "*",
     "@types/express": "^5.0.0",
     "@types/cors": "^2.8.17",
-    "@types/better-sqlite3": "^7.6.12",
     "@types/uuid": "^10.0.0",
     "@types/jest": "^29.5.0",
     "@types/supertest": "^6.0.0",

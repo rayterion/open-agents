@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { Client } from '@libsql/client';
 import { createTestDatabase, runMigrations } from '../database';
 import { ActivityLogRepository } from '../repositories/activity-log.repository';
 import { AgentRepository } from '../repositories/agent.repository';
@@ -6,18 +6,18 @@ import { ProjectRepository } from '../repositories/project.repository';
 import { AgentTeam } from '@open-agents/shared';
 
 describe('ActivityLogRepository', () => {
-  let db: Database.Database;
+  let db: Client;
   let logRepo: ActivityLogRepository;
   let agentRepo: AgentRepository;
   let testAgentId: string;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     db = createTestDatabase();
-    runMigrations(db);
+    await runMigrations(db);
     logRepo = new ActivityLogRepository(db);
     agentRepo = new AgentRepository(db);
 
-    const agent = agentRepo.create({
+    const agent = await agentRepo.create({
       name: 'TestAgent',
       description: 'Test agent',
       team: AgentTeam.CREATIVE,
@@ -31,8 +31,8 @@ describe('ActivityLogRepository', () => {
   });
 
   describe('create', () => {
-    it('should create an activity log entry', () => {
-      const log = logRepo.create({
+    it('should create an activity log entry', async () => {
+      const log = await logRepo.create({
         agentId: testAgentId,
         action: 'TEST_ACTION',
         details: 'Test details',
@@ -48,8 +48,8 @@ describe('ActivityLogRepository', () => {
       expect(log.taskId).toBeNull();
     });
 
-    it('should use defaults for optional fields', () => {
-      const log = logRepo.create({
+    it('should use defaults for optional fields', async () => {
+      const log = await logRepo.create({
         agentId: testAgentId,
         action: 'SIMPLE_ACTION',
       });
@@ -60,55 +60,55 @@ describe('ActivityLogRepository', () => {
   });
 
   describe('findById', () => {
-    it('should find a log by ID', () => {
-      const created = logRepo.create({
+    it('should find a log by ID', async () => {
+      const created = await logRepo.create({
         agentId: testAgentId,
         action: 'TEST_ACTION',
       });
 
-      const found = logRepo.findById(created.id);
+      const found = await logRepo.findById(created.id);
       expect(found).not.toBeNull();
       expect(found!.action).toBe('TEST_ACTION');
     });
 
-    it('should return null for non-existent log', () => {
-      expect(logRepo.findById('non-existent')).toBeNull();
+    it('should return null for non-existent log', async () => {
+      expect(await logRepo.findById('non-existent')).toBeNull();
     });
   });
 
   describe('findByAgent', () => {
-    it('should find logs by agent ID', () => {
+    it('should find logs by agent ID', async () => {
       for (let i = 0; i < 3; i++) {
-        logRepo.create({
+        await logRepo.create({
           agentId: testAgentId,
           action: `ACTION_${i}`,
         });
       }
 
-      const result = logRepo.findByAgent(testAgentId, 1, 20);
+      const result = await logRepo.findByAgent(testAgentId, 1, 20);
       expect(result.logs).toHaveLength(3);
       expect(result.total).toBe(3);
     });
 
-    it('should paginate results', () => {
+    it('should paginate results', async () => {
       for (let i = 0; i < 5; i++) {
-        logRepo.create({
+        await logRepo.create({
           agentId: testAgentId,
           action: `ACTION_${i}`,
         });
       }
 
-      const page1 = logRepo.findByAgent(testAgentId, 1, 2);
+      const page1 = await logRepo.findByAgent(testAgentId, 1, 2);
       expect(page1.logs).toHaveLength(2);
       expect(page1.total).toBe(5);
     });
   });
 
   describe('findByProject', () => {
-    it('should find logs by project ID', () => {
+    it('should find logs by project ID', async () => {
       const projectRepo = new ProjectRepository(db);
 
-      const project = projectRepo.create(
+      const project = await projectRepo.create(
         {
           name: 'TestProject',
           description: 'Test project',
@@ -118,18 +118,18 @@ describe('ActivityLogRepository', () => {
         testAgentId,
       );
 
-      logRepo.create({
+      await logRepo.create({
         agentId: testAgentId,
         action: 'PROJECT_ACTION',
         projectId: project.id,
       });
 
-      logRepo.create({
+      await logRepo.create({
         agentId: testAgentId,
         action: 'OTHER_ACTION',
       });
 
-      const result = logRepo.findByProject(project.id, 1, 20);
+      const result = await logRepo.findByProject(project.id, 1, 20);
       expect(result.logs).toHaveLength(1);
       expect(result.total).toBe(1);
     });

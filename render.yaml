@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: open-agents-api
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npx turbo run build --filter=@open-agents/api
+    startCommand: node apps/api/dist/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: TURSO_DATABASE_URL
+        sync: false   # set manually in Render dashboard
+      - key: TURSO_AUTH_TOKEN
+        sync: false   # set manually in Render dashboard
